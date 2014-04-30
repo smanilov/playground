@@ -41,36 +41,25 @@ public:
 
 
 class CompositeOperation : public Operation {
-private:
-        int children;
-
 public:
-        CompositeOperation(int c) : children(c) { }
-
         virtual bool equals(const Operation& other) const override {
                 const CompositeOperation* other_ptr = 
                         dynamic_cast<const CompositeOperation*>(&other);
-                return other_ptr != NULL && other_ptr->children == children;
+                return other_ptr != NULL;
         }
 };
 
 class ParallelOperation : public CompositeOperation {
 public:
-        ParallelOperation(int c) : CompositeOperation(c) { }
-
         virtual bool equals(const Operation& other) const override {
-                return NULL != dynamic_cast<const ParallelOperation*>(&other)
-                        && CompositeOperation::equals(other);
+                return NULL != dynamic_cast<const ParallelOperation*>(&other);
         }
 };
 
 class SerialOperation : public CompositeOperation {
 public:
-        SerialOperation(int c) : CompositeOperation(c) { }
-
         virtual bool equals(const Operation& other) const override {
-                return NULL != dynamic_cast<const SerialOperation*>(&other)
-                        && CompositeOperation::equals(other);
+                return NULL != dynamic_cast<const SerialOperation*>(&other);
         }
 };
 
@@ -110,8 +99,8 @@ int main() {
         // Build K4
         ARGEdit editor_k4;  // The object used to create the graph
 
-        editor_k4.InsertNode(new SerialOperation(2));
-        editor_k4.InsertNode(new ParallelOperation(2));
+        editor_k4.InsertNode(new SerialOperation());
+        editor_k4.InsertNode(new ParallelOperation());
         editor_k4.InsertNode(new OperationSource());
         editor_k4.InsertNode(new OperationSource());
         editor_k4.InsertNode(new OperationAddition());
@@ -130,8 +119,8 @@ int main() {
 
         ARGEdit editor_k3;  // The object used to create the graph
 
-        editor_k3.InsertNode(new SerialOperation(2));
-        editor_k3.InsertNode(new ParallelOperation(2));
+        editor_k3.InsertNode(new SerialOperation());
+        editor_k3.InsertNode(new ParallelOperation());
         editor_k3.InsertNode(new OperationSource());
         editor_k3.InsertNode(new OperationSource());
         editor_k3.InsertNode(new OperationAddition());
