@@ -1,6 +1,9 @@
+#include <string>
 #include <iostream>
 #include <vector>
 #include <cmath>
+
+using std::stoi;
 
 using std::ostream;
 using std::cout;
@@ -8,43 +11,50 @@ using std::cerr;
 
 using std::vector;
 
+typedef unsigned char uchar_t;
+
+struct RGB24bit {
+        uchar_t red;
+        uchar_t green;
+        uchar_t blue;
+};
+
 class PPMImage {
 private:
         int w;
         int h;
-        vector<char> red, green, blue;
+        vector<RGB24bit> pixels;
 
         void outputHeader(ostream& os) const {
                 os << "P6 " << w << " " << h << " 255\n";
         }
         void outputData(ostream& os) const {
-                for (int i = 0; i < red.size(); ++i) {
-                        os << red[i] << green[i] << blue[i];
+                for (int i = 0; i < pixels.size(); ++i) {
+                        os << pixels[i].red << pixels[i].green << pixels[i].blue;
                 }
         }
 public:
         PPMImage(int width, int height) {
                 w = width;
                 h = height;
-                red   = vector<char>(w * h);
-                green = vector<char>(w * h);
-                blue  = vector<char>(w * h);
+                pixels = vector<RGB24bit>(w * h);
+        }
 
+        PPMImage(int width, int height, const RGB24bit& backgroundColor)
+        : PPMImage(width, height) {
                 for (int y = 0; y < h; ++y) {
                         for (int x = 0; x < w; ++x) {
-                                setPixel(x, y, 0xff, 0x11, 0x00);
+                                setPixel(x, y, backgroundColor);
                         }
                 }
         }
         
-        bool setPixel(int x, int y, char r, char g, char b) {
+        bool setPixel(int x, int y, const RGB24bit& color) {
                 if (!(x >= 0 && x < w && y >= 0 && y < h)) {
                         return false;
                 }
                 int idx = (h - y - 1) * w + x;
-                red  [idx] = r;
-                green[idx] = g;
-                blue [idx] = b;
+                pixels[idx] = color;
                 return true;
         }
 
@@ -64,22 +74,23 @@ bool isPrime(int x) {
         return true;
 }
 
-bool drawSpiralPixel(PPMImage& image, int x0, int y0, double r, double theta, double num) {
+bool drawSpiralPixel(PPMImage& image, int x0, int y0, double r, double theta,
+                double num, const RGB24bit& primeColor, const RGB24bit& compositeColor) {
         int x = (int) (x0 + r * cos(theta));
         int y = (int) (y0 + r * sin(theta));
         if (isPrime((int)(num))) {
-                if (!image.setPixel(x, y, 0xff, 0xff, 0x00)) {
+                if (!image.setPixel(x, y, primeColor)) {
                         return false;
                 }
         } else {
-                if (!image.setPixel(x, y, 0x00, 0x00, 0x00)) {
+                if (!image.setPixel(x, y, compositeColor)) {
                         return false;
                 }
         }
         return true;
 }
 
-void drawSpiral(PPMImage& image, int x0, int y0) {
+void drawSpiral(PPMImage& image, int x0, int y0, int lineWidth, const RGB24bit& primeColor, const RGB24bit& compositeColor) {
         double b = 2.0;
         double dtheta = 1e-1;
 
@@ -87,17 +98,19 @@ void drawSpiral(PPMImage& image, int x0, int y0) {
         for (double theta = 0.0; ; theta += dtheta) {
                 double r = b * theta;
                 double num = theta * r * scale;
-                if (!drawSpiralPixel(image, x0, y0, r, theta, num)) {
-                        break;
+                double dr = -((double)(lineWidth - 1)) / 2;
+                for (int i = 0; i < lineWidth; ++i) {
+                        if (!drawSpiralPixel(image, x0, y0, r + dr, theta, num, primeColor, compositeColor)) {
+                                goto end;
+                        }
+                        dr += 0.5;
                 }
-                drawSpiralPixel(image, x0, y0, r - 1.0, theta, num);
-                drawSpiralPixel(image, x0, y0, r - 0.5, theta, num);
-                drawSpiralPixel(image, x0, y0, r + 0.5, theta, num);
-                drawSpiralPixel(image, x0, y0, r + 1.0, theta, num);
                 if (r > 10.0) {
                         dtheta = 1 / r;
                 }
         }
+end:
+        return;
 }
 
 bool testIsPrime() {
@@ -110,14 +123,50 @@ bool testIsPrime() {
         return true;
 }
 
-int main()
+void usage(int argc, char **argv) {
+        cerr << "Usage: " << argv[0] << " <width> <height> <line-width> <background-red> "
+                "<...-green> <...-blue> <prime-red> <...-green> <...-blue> "
+                "<composite-red> <...-green> <...-blue>\n";
+}
+
+int main(int argc, char **argv)
 {
-        static const int W = 300;
-        static const int H = 300;
+        int W = 300;
+        int H = 300;
 
-        PPMImage img(W, H);
+        int lineWidth = 5;
 
-        drawSpiral(img, W/2, H/2);
+        RGB24bit backgroundColor = {0xff, 0x11, 0x00};
+        RGB24bit primeColor = {0xff, 0xff, 0x00};
+        RGB24bit compositeColor = {0x00, 0x00, 0x00};
+
+        if (argc > 1) {
+                if (argc != 13) {
+                        usage(argc, argv);
+                        return 1;
+                } else {
+                        W                     = stoi(argv[1]);
+                        H                     = stoi(argv[2]);
+
+                        lineWidth             = stoi(argv[3]);
+
+                        backgroundColor.red   = stoi(argv[4]);
+                        backgroundColor.green = stoi(argv[5]);
+                        backgroundColor.blue  = stoi(argv[6]);
+
+                        primeColor.red        = stoi(argv[7]);
+                        primeColor.green      = stoi(argv[8]);
+                        primeColor.blue       = stoi(argv[9]);
+
+                        compositeColor.red    = stoi(argv[10]);
+                        compositeColor.green  = stoi(argv[11]);
+                        compositeColor.blue   = stoi(argv[12]);
+                }
+        }
+
+        PPMImage img(W, H, backgroundColor);
+
+        drawSpiral(img, W/2, H/2, lineWidth, primeColor, compositeColor);
 
         cout << img;
 }
