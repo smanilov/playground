@@ -3,6 +3,9 @@
 #include <vector>
 #include <cmath>
 
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+
 using std::stoi;
 using std::stod;
 
@@ -21,7 +24,7 @@ struct RGB24bit {
 };
 
 class PPMImage {
-private:
+public:
         int w;
         int h;
         vector<RGB24bit> pixels;
@@ -148,6 +151,20 @@ void usage(int argc, char **argv) {
                 "<composite-red> <...-green> <...-blue>\n";
 }
 
+void show(const PPMImage& image) {
+        cv::Mat test(image.h, image.w, CV_8UC3);
+        for (int i = 0; i < test.rows; ++i) {
+                for (int j = 0; j < test.cols; ++j) {
+                        int idx = (i * test.cols + j);
+                        test.data[3 * idx + 0] = image.pixels[idx].blue;
+                        test.data[3 * idx + 1] = image.pixels[idx].green;
+                        test.data[3 * idx + 2] = image.pixels[idx].red;
+                }
+        }
+        cv::imshow("Test", test);
+}
+
+
 int main(int argc, char **argv)
 {
         int W = 300;
@@ -193,5 +210,10 @@ int main(int argc, char **argv)
 
         drawSpiral(img, W/2, H/2, b, scale, lineWidth, primeColor, compositeColor);
 
-        cout << img;
+        show(img);
+
+        while (true) {
+                char key = cv::waitKey(1);
+                if (key == 'q') break;
+        }
 }
