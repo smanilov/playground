@@ -13,6 +13,8 @@ protected:
         vector<unique_ptr<int>> hellos;
 public:
         virtual void sayHello(unique_ptr<int> say) = 0;
+
+        inline void f() { cout << "hey!\n"; }
 };
 
 class B : public A {

@@ -92,6 +92,16 @@ bool drawSpiralPixel(PPMImage& image, int x0, int y0, double r, double theta,
 
         static int circum = circum0;
         static int mod = mod0;
+        static bool first = true;
+        if (first) {
+            for (int i = 0; i < num; ++i) {
+                if (i == mod + 1) {
+                        ++count;
+                        mod += circum;
+                        circum += 8;
+                }
+            }
+        }
         if (num == mod + 1) {
 //                if (isPrime(mod)) {
 //                        cerr << "\t" << mod << '\n';
@@ -125,12 +135,14 @@ bool drawSpiralPixel(PPMImage& image, int x0, int y0, double r, double theta,
         return true;
 }
 
-void drawSpiral(PPMImage& image, int x0, int y0, double b, double scale, int lineWidth, int circum0, int mod0, const RGB24bit& primeColor, const RGB24bit& compositeColor) {
+void drawSpiral(PPMImage& image, int x0, int y0, double b, double scale, int
+lineWidth, int circum0, int mod0, const RGB24bit& primeColor, const RGB24bit&
+compositeColor, int frameNum) {
         double dtheta = 1e-1;
 
         for (double theta = 0.0; ; theta += dtheta) {
                 double r = b * theta;
-                double num = theta * r * scale;
+                double num = theta * r * scale + frameNum;
                 double dr = -((double)(lineWidth - 1)) / 2;
                 for (int i = 0; i < lineWidth; ++i) {
                         if (!drawSpiralPixel(image, x0, y0, r + dr, theta, num, circum0, mod0, primeColor, compositeColor)) {
@@ -159,7 +171,8 @@ bool testIsPrime() {
 void usage(int argc, char **argv) {
         cerr << "Usage: " << argv[0] << " <width> <height> <b> <scale> <line-width> <circum0> <mod0> <background-red> "
                 "<...-green> <...-blue> <prime-red> <...-green> <...-blue> "
-                "<composite-red> <...-green> <...-blue>\n";
+                "<composite-red> <...-green> <...-blue> "
+                "<frame-num>\n";
 }
 
 int main(int argc, char **argv)
@@ -179,8 +192,10 @@ int main(int argc, char **argv)
         RGB24bit primeColor = {0xff, 0x00, 0x00};
         RGB24bit compositeColor = {0x80, 0x80, 0x80};
 
+        int frameNum = 0;
+
         if (argc > 1) {
-                if (argc != 17) {
+                if (argc != 18) {
                         usage(argc, argv);
                         return 1;
                 } else {
@@ -206,12 +221,14 @@ int main(int argc, char **argv)
                         compositeColor.red    = stoi(argv[14]);
                         compositeColor.green  = stoi(argv[15]);
                         compositeColor.blue   = stoi(argv[16]);
+
+                        frameNum              = stoi(argv[17]);
                 }
         }
 
         PPMImage img(W, H, backgroundColor);
 
-        drawSpiral(img, W/2, H/2, b, scale, lineWidth, circum0, mod0, primeColor, compositeColor);
+        drawSpiral(img, W/2, H/2, b, scale, lineWidth, circum0, mod0, primeColor, compositeColor, frameNum);
         cout << img;
 
         if (count2 < 300) {

@@ -23,7 +23,7 @@ int main()
         int w = 500, h = 800, g = 1000;
 
         // read input
-        scanf("%d%d%d", &w, &h, &g);
+//        scanf("%d%d%d", &w, &h, &g);
 
         int i, j;
         int **times;

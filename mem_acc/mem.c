@@ -1,7 +1,8 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdint.h>
 
-#define N (1 << 16)
+#define N (1 << 12)
 #define SEED 1
 
 #define EXTRACT_BYTE0(x) (x & 0x000000ff)

@@ -29,10 +29,22 @@ int main(int argc, char** argv) {
         int x = 0, y = 1027;
         traversal peano = traversal().next().next().next().next().next().next().next().next().next();
 
-        Vec3b composite_col = {0, 0, 128};
+        Vec3b composite_col = {0, 64, 128};
         Vec3b prime_col = {255, 255, 255};
         int count = 0;
         for (auto& d : peano.dirs) {
+                if (composite_col.val[2] > 64 && composite_col.val[1] == 64) {
+                        composite_col.val[2]--;
+                } else if (composite_col.val[1] < 128 && composite_col.val[2] == 64) {
+                        composite_col.val[1]++;
+                } else if (composite_col.val[2] < 128) {
+                        composite_col.val[2]++;
+                } else {
+                        composite_col.val[1]--;
+                }
+                if (composite_col.val[1] == 64 && composite_col.val[2] == 128) {
+                        composite_col.val[0]++;
+                }
                 switch (d.val) {
                 case 'u':
                         image.at<Vec3b>(y, x) = composite_col;
@@ -60,8 +72,8 @@ int main(int argc, char** argv) {
                         break;
                 }
 //                if (0 == count % 100) {
-                        if (waitKey(1) >= 0) break;
-                        imshow("Display Image", image);
+//                        if (waitKey(1) >= 0) break;
+//                        imshow("Display Image", image);
 //                }
                 ++count;
         }
